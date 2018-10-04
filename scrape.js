@@ -2,39 +2,41 @@ var AliExpressSpider = require('aliexpress');
 var mkdirp = require('mkdirp');
 var fs = require('fs');
 var Image = require('./imageDownload');
+var csv = require("fast-csv");
 
-var url ="https://www.aliexpress.com/store/product/2018-new-Simple-alphabet-BRUH-Embroidery-dad-hat-men-women-Summer-fashion-baseball-cap-snapback-Hip/1048319_32854189200.html"
-var product = "Bruh cap"
-var folder ="2018-10-04--bruh"
-var category = "text"
-AliExpressSpider.Detail(url).then(function(detail){
+csv
+ .fromPath("/home/stephen/Projects/DadCapClub-Scraper/test .csv",{headers: true})
+ .on("data", function(data){
+     console.log(data);
+     
+AliExpressSpider.Detail(data.url).then(function(detail){
   console.log('good detail', detail);
   
-  mkdirp(folder, function(err) { 
+  mkdirp(data.folder, function(err) { 
     console.log("folder was created");
 
-    Image.download(detail.gallery[0].src, folder+'/cover.jpg', function(){
+    Image.download(detail.gallery[0].src, data.folder+'/cover.jpg', function(){
       console.log('Cover downloaded');});
 
       for (var value of detail.variants) {
-        Image.download(value.src, folder+'/'+value.alt+'.jpg', function(){
+        Image.download(value.src, data.folder+'/'+value.alt+'.jpg', function(){
           ;});
 
       }
 
     
     var md = '---\n' +
-         'title: '+product+'\n'+
+         'title: '+data.product+'\n'+
          'colour: ['+detail.colours+']\n' +
          'subTitle: \n' +
-         'category: '+category+'\n' +
+         'category: '+data.category+'\n' +
          'price: 999\n' +
          'cover: cover.jpg\n' +
          'images:\n' +
          detail.images.join("") +
          '---';
       
-      fs.writeFile(folder+"/index.md", md, function(err) {
+      fs.writeFile(data.folder+"/index.md", md, function(err) {
           if(err) {
               return console.log(err);
           }
@@ -47,3 +49,7 @@ AliExpressSpider.Detail(url).then(function(detail){
 }, function(reason){
   // error handler
 });
+ })
+ .on("end", function(){
+     console.log("done");
+ });
